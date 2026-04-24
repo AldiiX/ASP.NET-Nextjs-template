@@ -2,34 +2,34 @@
 ARG APP_UID=1000
 
 # Base stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 
 # Stage to install Node.js
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS with-node
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS with-node
 RUN apt-get update && apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_22.x | bash && apt-get install -y nodejs
+RUN curl -sL https://deb.nodesource.com/setup_24.x | bash && apt-get install -y nodejs
 
 # Stage to build the backend
 FROM with-node AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["aspnext.Server/aspnext.Server.csproj", "aspnext.Server/"]
-COPY ["aspnext.client/aspnext.client.esproj", "aspnext.client/"]
-RUN dotnet restore "./aspnext.Server/aspnext.Server.csproj"
+COPY ["server/server.csproj", "server/"]
+COPY ["client/client.esproj", "client/"]
+RUN dotnet restore "./server/server.csproj"
 COPY . .
-WORKDIR "/src/aspnext.Server"
+WORKDIR "/src/server"
 
 # vytvoreni prazdnyho .env souboru v tomto direktory pokud .env neexistuje
 RUN if [ ! -f ".env" ]; then touch .env; fi
 
 # buildnuti backendu
-RUN dotnet build "./aspnext.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Stage to publish the backend
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./aspnext.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Final stage
 FROM base AS final
@@ -39,10 +39,10 @@ COPY --from=publish /app/publish .
 # Switch to root to install packages
 USER root
 RUN apt-get update && apt-get install -y curl nginx
-RUN curl -sL https://deb.nodesource.com/setup_22.x | bash && apt-get install -y nodejs
+RUN curl -sL https://deb.nodesource.com/setup_24.x | bash && apt-get install -y nodejs
 
 # Copy frontend files and fix permissions
-COPY ["aspnext.client/", "/app/client/"]
+COPY ["client/", "/app/client/"]
 RUN chown -R $APP_UID:$APP_UID /app/client
 WORKDIR /app/client
 

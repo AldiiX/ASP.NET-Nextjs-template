@@ -1,12 +1,6 @@
-using System.Collections.Generic;
 using dotenv.net;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
-namespace aspnext.Server;
+namespace server;
 
 
 
@@ -32,16 +26,12 @@ public static class Program {
 
         builder.Services.AddControllers();
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddOpenApi();
         builder.Services.AddHttpClient();
 
         Application = builder.Build();
 
         Application.UseDefaultFiles();
         Application.MapStaticAssets();
-
-        // Configure the HTTP request pipeline.
-        if (Application.Environment.IsDevelopment()) Application.MapOpenApi();
 
 
         //app.UseHttpsRedirection();
